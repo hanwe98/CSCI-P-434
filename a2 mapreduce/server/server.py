@@ -10,6 +10,7 @@ num_reducer = 10
 port_outset = 8001
 max_mapper = 20
 max_reducer = 20
+reducer_outset = port_outset + max_mapper
 mapper_ports = [port_outset + n for n in range(max_mapper)]
 reducer_ports = [port_outset + max_mapper + n for n in range(max_reducer)]
 
@@ -83,22 +84,33 @@ def server_receive_file(arg):
             for line in lines[i]:
                 mapper_sockets[i].send(line)
             mapper_sockets[i].send(str.encode('exit'))
-        # successfully send to mappers!
+        # at this point, data has been successfully sent to mappers!
         
-        # reducer_results = []
-        # for i in range(num_reducer):
-        #     recv = reducer_results[i].recv(1024)
-        #     reducer_results = recv
-        #     while recv:
-        #         recv = reducer_results[i].recv(1024)
-        #         reducer_results += recv
-        #     reducer_results.append(json.loads(reducer_results).items())
-        # # receive from the reducer
-        # print(reducer_results)
+        map_results = []
+        for i in range(num_reducer):
+            map_results.append([])
+        
+        for i in range(num_mapper):
+            recv = mapper_sockets[i].recv(1024)
+            mapper_result = recv
+            while recv:
+                recv = mapper_sockets[i].recv(1024)
+                mapper_result += recv
+            temp = json.loads(mapper_result) # [defaultdictOf ID ReducerEntry]
+            
+            #add to map_results
+            for i,re in temp.items():
+                c = int(i)
+                map_results[c] = map_results[c] + re 
+        # at this point, map_results come back from mappers
 
-        # with open ("saved_results.txt", "wb") as r:
-        #     for k,v in reducer_results:
-        #         r.write
+        # send map_results to reducers
+        for i in range(num_reducer):
+            for result in map_results:
+                mapper_sockets[i].send(line)
+            mapper_sockets[i].send(str.encode('exit'))
+        # at this point, data has been successfully sent to mappers!
+
         
     return True
 

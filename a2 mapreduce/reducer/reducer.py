@@ -4,6 +4,7 @@ from collections import defaultdict
 import sys
 import re  
 import json
+from threading import Thread
 
 try:
     serverPort = int(sys.argv[1]) # 8021
@@ -14,39 +15,44 @@ try:
 except:
     print("Error on port number")
 
-mapper_communication_sockets = []
-mapper_communication_ports[]
-num_mapper = 2
+# to_be_reduced ： [ArrayOf ReducerEntry]
+to_be_reduced = [] 
+def save_to_list(connectionSocket, addr):
+    recv = connectionSocket.recv(1024)
+    result = recv
+    while recv:
+        recv = connectionSocket.recv(1024)
+        results += recv
+    print(json.loads(results).items())
+    to_be_reduced.append(json.loads(results))
+    connectionSocket.close()
+
+# receive # of mappers
+for i in range(2):
+    connectionSocket, addr = serverSocket.accept()     # Establish connection with mapper.
+    Thread.start_new_thread(save_to_list, (connectionSocket,addr))
+# at this point, list contains all works that needs to be done 
+t.join()
+serverSocket.close()
 
 
-def open_mappers_communication():
-    serverName = "localhost"
+# receive files from mappers
+
+# operate on files
+
+# send back to master
+
+
+for i in range(num_mapper):
+    connectionSocket[i], addr[i] = mapper_communication_sockets[i].accept()
+# connection established with mapper
     
-    for i in range(num_mapper):
-        mapper_communication_sockets.append(socket(AF_INET, SOCK_STREAM))
-        
-    try:
-        for i in range(num_mapper):
-            mapper_communication_sockets[i].connect((serverName, mapper_ports[i]))
-        print("communication with mappers established")
-        return True
-    except Exception as e:
-        print(f"mapper failed to open : {e}")
-        return False
-    print(f"mapper failed to open and escape except")
-
-
-while 1:
-    # receive instructions from 
-    master_socket = socket(AF_INET, SOCK_STREAM)
-    connectionSocket, addr = serverSocket.accept()
     line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
+# when to stop?
 
 
-    # receive ReducerEntry from Mappers
-    
-    open_mappers_communication()
 
+# receive ReducerEntry from Mappers
 
-    
-    while line:
+open_mappers_communication()
+

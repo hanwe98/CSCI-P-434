@@ -27,7 +27,7 @@ def line_to_words(line):
 
 # A ReducerEntry is a [ListOf [PairOf String Count]], implemented with list
 # An ID is an Integer bewteen 0 (inclusive) and num_reducer (exclusive)
-# mapper : [ListOf String] -> [PairOf ID ReducerEntry]
+# mapper : [ListOf String] -> [defaultdictOf ID ReducerEntry]
 # takes a list of lines and return the outcome of a wordcount mapper
 def mapper(listOfLines):
     listOfWords = []
@@ -62,53 +62,23 @@ def distributor(combiner_result):
         distributor[index].append((k,v))
     return distributor
 
-reducer_sockets = []
-reducer_ports = [8021, 8022]
-def open_reducers():
-    serverName = "localhost"
-    while len(reducer_ports) > 0:
-        current_port = reducer_ports.pop(0)
-        
-    for i in range(num_reducer):
-        reducer_sockets.append(socket(AF_INET, SOCK_STREAM))
-        
-    try:
-        for i in range(num_reducer):
-            reducer_sockets[i].connect((serverName, reducer_ports[i]))
-        print("reducer opened")
-        return True
-    except Exception as e:
-        print(f"reducer failed to open : {e}")
-        return False
-    print(f"reducer failed to open and escape except")
-
 listOfLines = []
-
+print(0)
 # receive document from master
 connectionSocket, addr = serverSocket.accept()
 line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
+print(1)
 while line:
     if line == 'exit':
         break
     listOfLines.append(line)
     line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
 # document fully received from the master and saved into listOfLines at this point
-
-map_result = mapper(listOfLines) # [ListOf [PairOf ID ReducerEntry]]
+print(2)
+map_result = mapper(listOfLines) # [defaultdictOf ID ReducerEntry]
 # results are fully computed and saved in map_result at this point
+serialized_dict = json.dumps(map_result)
 
-# send map_results to reducers
-# open_reducers() # establish connection with reducers
-
-# i = 0
-# for k,v in map_results:
-#     serialized_dict = json.dumps(v)
-#     reducer_sockets[i].send(str.encode(serialized_dict))
-#     i += 1
-# at this point, all data has been distributed to all reducers
-
-# close all sockets
 print("socket closed")
+connectionSocket.send(str.encode(serialized_dict))
 connectionSocket.close()
-# for socket in reducer_sockets:
-#     socket.close()
