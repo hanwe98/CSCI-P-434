@@ -6,13 +6,15 @@ import re
 import json
 
 try:
-    serverPort = int(sys.argv[1]) # 9889
+    serverPort = int(sys.argv[1]) # 8001
     serverSocket = socket(AF_INET,SOCK_STREAM)
     serverSocket.bind(('',serverPort))
     serverSocket.listen(1)
     print(f"The server {serverPort} is ready to receive")
 except:
     print("Error on port number")
+
+
 
 def emit(word):
     return (word, 1)
@@ -23,7 +25,7 @@ def line_to_words(line):
     string_no_punctuation = re.sub("[^\w\s]", "", line)
     return string_no_punctuation.split()
 
-# A ReducerEntry is a [ListOf [PairOf String Count]]
+# A ReducerEntry is a [ListOf [PairOf String Count]], implemented with list
 # An ID is an Integer bewteen 0 (inclusive) and num_reducer (exclusive)
 # mapper : [ListOf String] -> [PairOf ID ReducerEntry]
 # takes a list of lines and return the outcome of a wordcount mapper
@@ -64,7 +66,9 @@ reducer_sockets = []
 reducer_ports = [8021, 8022]
 def open_reducers():
     serverName = "localhost"
-    
+    while len(reducer_ports) > 0:
+        current_port = reducer_ports.pop(0)
+        
     for i in range(num_reducer):
         reducer_sockets.append(socket(AF_INET, SOCK_STREAM))
         
@@ -79,33 +83,32 @@ def open_reducers():
     print(f"reducer failed to open and escape except")
 
 listOfLines = []
-while 1:
-    # receive document from master
-    connectionSocket, addr = serverSocket.accept()
+
+# receive document from master
+connectionSocket, addr = serverSocket.accept()
+line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
+while line:
+    if line == 'exit':
+        break
+    listOfLines.append(line)
     line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
-    while line:
-        if line == 'exit':
-            break
-        listOfLines.append(line)
-        line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
-    # document fully received from the master and saved into listOfLines at this point
-    
-    map_result = mapper(listOfLines) # [PairOf ID ReducerEntry]
-    # results are fully computed and saved in map_result at this point
+# document fully received from the master and saved into listOfLines at this point
 
-    # send map_results to reducers
-    # open_reducers()
-    
-    # i = 0
-    # for k,v in map_results:
-    #     serialized_dict = json.dumps(v)
-    #     reducer_sockets[i].send(str.encode(serialized_dict))
-    #     i += 1
-    # at this point, all data has been distributed to all reducers
+map_result = mapper(listOfLines) # [ListOf [PairOf ID ReducerEntry]]
+# results are fully computed and saved in map_result at this point
 
-    # close all sockets
-    print("socket closed")
-    connectionSocket.close()
-    # for socket in reducer_sockets:
-    #     socket.close()
-    break
+# send map_results to reducers
+# open_reducers() # establish connection with reducers
+
+# i = 0
+# for k,v in map_results:
+#     serialized_dict = json.dumps(v)
+#     reducer_sockets[i].send(str.encode(serialized_dict))
+#     i += 1
+# at this point, all data has been distributed to all reducers
+
+# close all sockets
+print("socket closed")
+connectionSocket.close()
+# for socket in reducer_sockets:
+#     socket.close()

@@ -19,6 +19,7 @@ reducer_sockets = []
 def reducer(pair):
     return (pair[0], sum(pair[1]))
 
+# init_cluster: Takes two numbers m and r, and open m number of mappers and n number of reducers
 def init_cluster(m, r):
     global num_mapper
     global num_reducer
@@ -94,7 +95,7 @@ def server_receive_file(arg):
         #     reducer_results.append(json.loads(reducer_results).items())
         # # receive from the reducer
         # print(reducer_results)
-        
+
         # with open ("saved_results.txt", "wb") as r:
         #     for k,v in reducer_results:
         #         r.write
