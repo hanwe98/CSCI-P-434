@@ -54,12 +54,10 @@ def distributor(combiner_result):
 
     # initialize distributor
     distributor = defaultdict(list)
-
     # fill in sorted_results
-    for k,v in combiner:
+    for k,v in combiner_result.items():
         index = (ord(k[0].upper()) - 65) % num_reducer
         distributor[index].append((k,v))
-
     return distributor
 
 reducer_sockets = []
@@ -96,17 +94,18 @@ while 1:
     # results are fully computed and saved in map_result at this point
 
     # send map_results to reducers
-    open_reducers()
+    # open_reducers()
     
-    i = 0
-    for k,v in map_results:
-        serialized_dict = json.dumps(v)
-        reducer_sockets[i].send(str.encode(serialized_dict))
-        i += 1
+    # i = 0
+    # for k,v in map_results:
+    #     serialized_dict = json.dumps(v)
+    #     reducer_sockets[i].send(str.encode(serialized_dict))
+    #     i += 1
     # at this point, all data has been distributed to all reducers
 
+    # close all sockets
     print("socket closed")
     connectionSocket.close()
-    for socket in reducer_sockets:
-        socket.close()
+    # for socket in reducer_sockets:
+    #     socket.close()
     break
