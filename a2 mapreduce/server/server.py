@@ -83,41 +83,21 @@ def server_receive_file(arg):
                 mapper_sockets[i].send(line)
             mapper_sockets[i].send(str.encode('exit'))
         # successfully send to mappers!
-
-        map_results = []
-        for i in range(num_mapper):
-            recv = mapper_sockets[i].recv(1024)
-            mapper_result = recv
-            while recv:
-                recv = mapper_sockets[i].recv(1024)
-                mapper_result += recv
-            map_results.append(json.loads(mapper_result).items())
-        # map results come back from mapper
-
-
-
-        reducer_tasks = []
-
-        # ...
-        # ...
-        # each list in reducer_tasks now contains the designated job for each reducer process
-
-        # send through socket
-        for i in range(num_reducer):
-            for task in reducer_tasks[i]:
-                reducer_sockets[i].send(task)
-            reducer_sockets[i].send(str.encode('exit'))
-        # successfully send to reducers!
         
-        reducer_results = []
-        for i in range(num_reducer):
-            recv = mapper_sockets[i].recv(1024)
-            mapper_result = recv
-            while recv:
-                recv = mapper_sockets[i].recv(1024)
-                mapper_result += recv
-            map_results.append(json.loads(mapper_result).items())
-
+        # reducer_results = []
+        # for i in range(num_reducer):
+        #     recv = reducer_results[i].recv(1024)
+        #     reducer_results = recv
+        #     while recv:
+        #         recv = reducer_results[i].recv(1024)
+        #         reducer_results += recv
+        #     reducer_results.append(json.loads(reducer_results).items())
+        # # receive from the reducer
+        # print(reducer_results)
+        
+        # with open ("saved_results.txt", "wb") as r:
+        #     for k,v in reducer_results:
+        #         r.write
         
     return True
 
