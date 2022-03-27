@@ -17,8 +17,6 @@ reducer_ports = [port_outset + max_mapper + n for n in range(max_reducer)]
 mapper_sockets = []
 reducer_sockets = []
 
-def reducer(pair):
-    return (pair[0], sum(pair[1]))
 
 # init_cluster: Takes two numbers m and r, and open m number of mappers and n number of reducers
 def init_cluster(m, r):
@@ -86,10 +84,12 @@ def server_receive_file(arg):
             mapper_sockets[i].send(str.encode('exit'))
         # at this point, data has been successfully sent to mappers!
         
+        # initialize map_results
         map_results = []
         for i in range(num_reducer):
             map_results.append([])
         
+        # receive from mapper
         for i in range(num_mapper):
             recv = mapper_sockets[i].recv(1024)
             mapper_result = recv
@@ -106,12 +106,29 @@ def server_receive_file(arg):
 
         # send map_results to reducers
         for i in range(num_reducer):
-            for result in map_results:
-                mapper_sockets[i].send(line)
-            mapper_sockets[i].send(str.encode('exit'))
-        # at this point, data has been successfully sent to mappers!
-
+            temp = map_results[i].append("exit")
+            msg = json.dumps(temp)
+            reducer_sockets[i].send(str.encode(msg))
+        # at this point, data has been successfully sent to reducers!
         
+        #--------------------------------
+        # # receive from reducers 
+        # reduce_results = []
+        # for i in range(num_reducer):
+        #     reduce_results.append([])
+        
+        # for i in range(num_reducer):
+        #     recv = reducer_sockets[i].recv(1024)
+        #     reduce_result = recv
+        #     while recv:
+        #         recv = reducer_sockets[i].recv(1024)
+        #         reduce_result += recv
+        #     temp = json.loads(reduce_result) # [defaultdictOf ID ReducerEntry]
+        #     print(temp)
+        # for i in range(num_reducer):
+        #     reducer_sockets[i].close()
+        # for i in range(num_mapper):
+        #     mapper_sockets[i].close()
     return True
 
         

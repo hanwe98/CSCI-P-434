@@ -4,7 +4,6 @@ from collections import defaultdict
 import sys
 import re  
 import json
-from threading import Thread
 
 try:
     serverPort = int(sys.argv[1]) # 8021
@@ -15,44 +14,31 @@ try:
 except:
     print("Error on port number")
 
-# to_be_reduced ： [ArrayOf ReducerEntry]
-to_be_reduced = [] 
-def save_to_list(connectionSocket, addr):
+def reducer(ls):
+    reducer = {}
+    for k,v in ls:
+        prev = reducer.get(k)
+        if prev is None:
+            reducer.update({k: v})
+        else:
+            reducer.update({k: v + prev})
+    return reducer
+
+
+connectionSocket, addr = serverSocket.accept()
+recv = connectionSocket.recv(1024)
+mapper_result = recv
+print(0)
+while recv:
+    if recv.decode()[-6:-2] == "exit":
+        break
     recv = connectionSocket.recv(1024)
-    result = recv
-    while recv:
-        recv = connectionSocket.recv(1024)
-        results += recv
-    print(json.loads(results).items())
-    to_be_reduced.append(json.loads(results))
-    connectionSocket.close()
+    mapper_result += recv
+print(1)
+ls = json.loads(mapper_result)
+reduce_result = reducer(ls)
+serialized_dict = json.dumps(reduce_result)
 
-# receive # of mappers
-for i in range(2):
-    connectionSocket, addr = serverSocket.accept()     # Establish connection with mapper.
-    Thread.start_new_thread(save_to_list, (connectionSocket,addr))
-# at this point, list contains all works that needs to be done 
-t.join()
-serverSocket.close()
-
-
-# receive files from mappers
-
-# operate on files
-
-# send back to master
-
-
-for i in range(num_mapper):
-    connectionSocket[i], addr[i] = mapper_communication_sockets[i].accept()
-# connection established with mapper
-    
-    line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
-# when to stop?
-
-
-
-# receive ReducerEntry from Mappers
-
-open_mappers_communication()
-
+print("socket closed")
+connectionSocket.send(str.encode(serialized_dict))
+connectionSocket.close()

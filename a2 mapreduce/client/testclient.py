@@ -4,7 +4,7 @@ option = 0
 
 filename = "book.txt"
 with xmlrpc.client.ServerProxy("http://localhost:8000/") as proxy:
-    proxy.init_cluster(2, 10)
+    proxy.init_cluster(2, 2)
     handle = open(filename, "rb")
     binary_data = xmlrpc.client.Binary(handle.read())
     proxy.server_receive_file(binary_data)

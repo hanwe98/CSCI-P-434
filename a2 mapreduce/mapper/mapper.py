@@ -63,19 +63,18 @@ def distributor(combiner_result):
     return distributor
 
 listOfLines = []
-print(0)
 # receive document from master
 connectionSocket, addr = serverSocket.accept()
 line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
-print(1)
 while line:
-    if line == 'exit':
+    if line[-4:] == 'exit':
+        listOfLines.append(line[:-4])
         break
     listOfLines.append(line)
     line = connectionSocket.recv(1024).decode('utf-8', 'ignore')
 # document fully received from the master and saved into listOfLines at this point
-print(2)
 map_result = mapper(listOfLines) # [defaultdictOf ID ReducerEntry]
+
 # results are fully computed and saved in map_result at this point
 serialized_dict = json.dumps(map_result)
 

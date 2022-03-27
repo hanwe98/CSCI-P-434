@@ -1,6 +1,4 @@
-d1,d2
-for k,v in d1:
-    if d2.contains(k):
-        d2[k] = d2[k] + v
-    else: 
-        d2[k] = v
+import json
+ls = [1,2,3,4,5, 'exit']
+st = "\"exit\"]"
+print(st[-6:-2])
