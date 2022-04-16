@@ -3,10 +3,11 @@ from socket import *
 import sys
 from methods import *
 from multiprocessing import Pool
-
+import argparse
 
 numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
+mode = None
 
 def broadcast(msg):
     return None
@@ -42,19 +43,21 @@ def open_server(port):
                 if s is None:
                     reply = "the value of " + key + " is not found in the storage system"
                 else:
-                    # (test use) reply = "the value of " + key + " is " + s
                     reply = "VALUE " + key + " " + s[1] + "\n" + s[0] + "\nEnd"
             if cmd == "set":
                 # perform set
                 val, byte = findUntilNextSpace(bv)
                 s = modify(location, key, val, byte)
 
-                # (test use) reply = "the value of " + key + " has been set to " + val 
                 reply = "STORED"
-
-                
-                # broadcast text in the background multiprocessing?
                 broadcastMsg = "broadcast" + " " + key + " " + val + " " + byte
+                if mode == 'eventual':
+                    # broadcast text in the background by multiprocessing?
+                    # non blocking broadcast
+                    ...
+                if mode == 'sequential':
+                    # blocking broadcast
+                    ...
 
             if cmd == "broadcast":
                 # handle broadcast messages from other replica
@@ -66,6 +69,13 @@ def open_server(port):
         connectionSocket.close()
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--consistency', type=str, required=True)
+    args = parser.parse_args()
+    if args.consistency in ['eventual', 'sequential']:
+        mode = args.consistency
+    else:
+        raise Exception(f'{args.consistency} : Not a valid mode. Please choose from eventual or sequential.')
     with Pool(processes=numberOfPorts) as pool:
         pool.map(open_server, serverPorts)
     
