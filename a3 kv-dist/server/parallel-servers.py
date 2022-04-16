@@ -4,7 +4,7 @@ import sys
 from methods import *
 import multiprocessing as mp
 
-numberOfPorts = 10
+numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 def open_server(port):
     try:
@@ -47,4 +47,8 @@ def open_server(port):
                 reply = "STORED"
             connectionSocket.send(str.encode(reply))
         connectionSocket.close()
-open_server(9889)
+
+if __name__ == '__main__':
+    with Pool(process=numberOfPorts) as pool:
+        pool.map(open_server, serverPorts)
+    
