@@ -36,7 +36,7 @@ while 1:
                 reply = "VALUE " + key + " " + s[1] + "\n" + s[0] + "\nEnd"
         if cmd == "set":
             # perform set
-            byte, val = findUntilNextSpace(bv)
+            val, byte = findUntilNextSpace(bv)
             s = modify(key, val, byte)
 
             # (test use) reply = "the value of " + key + " has been set to " + val 

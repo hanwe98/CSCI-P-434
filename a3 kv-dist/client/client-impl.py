@@ -21,7 +21,8 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 
 while 1:
-    sentence = input("Please enter a memcached-like command: \n")
+    sentence = input("Please enter a memcached-like command (type exit to quit): \n")
+    
     if sentence == 'exit':
         clientSocket.send(str.encode(sentence))
         break
@@ -30,9 +31,10 @@ while 1:
     s = cmd
     if cmd == "set":
         value = input()
-        s = s + " " + key + " " + byte + " " + value
-    if cmd == "get":
+        s = s + " " + key + " " + value + " " + byte
+    elif cmd == "get":
         s = s + " " + key
+    
     # print(s)
     clientSocket.send(str.encode(s))
 
