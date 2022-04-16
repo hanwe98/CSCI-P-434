@@ -19,6 +19,7 @@ except:
 
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
+
 while 1:
     sentence = input("Please enter a memcached-like command: \n")
     if sentence == 'exit':
