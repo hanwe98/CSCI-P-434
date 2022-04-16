@@ -9,7 +9,6 @@ numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 
 def open_server(port):
-    
     try:
         serverPort = port
         serverSocket = socket(AF_INET,SOCK_STREAM)
@@ -49,6 +48,8 @@ def open_server(port):
 
                 # (test use) reply = "the value of " + key + " has been set to " + val 
                 reply = "STORED"
+                # broadcast in the background multiprocessing?
+
             connectionSocket.send(str.encode(reply))
         connectionSocket.close()
 
