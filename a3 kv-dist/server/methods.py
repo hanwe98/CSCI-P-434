@@ -6,8 +6,14 @@ def findUntilNextSpace(t):
     return (t,'')
 
 # find the value associated to the given key in the storage file system.
-def find(key): 
-    f = open("./storage.txt", "r")
+def find(location, key): 
+    filename = "./" + location + "/storage.txt"
+
+    # create file if not exist
+    create = open(filename, "a+")
+    create.close()
+
+    f = open(filename, "r")
     for line in f:
         line = line.strip() # remove \n
         key1, vb = findUntilNextSpace(line)
@@ -16,16 +22,21 @@ def find(key):
             return findUntilNextSpace(vb)
     f.close()
     return None
-    
 
 # if the key is in the file of storage, update the associated value to the given value
-def modify(key, value, byte):
+def modify(location, key, value, byte):
+    filename = "./" + location + "/storage.txt"
+
+    # create file if not exist
+    create = open(filename, "a+")
+    create.close()
+
     s = key + " " + value + " " + byte
     find = False
-    with open("./storage.txt", "r") as fp:
+    with open(filename, "r") as fp:
         lines = fp.readlines()
 
-    with open("./storage.txt", "w") as fp:
+    with open(filename, "w") as fp:
         for line in lines:
             if not line.isspace():
                 if findUntilNextSpace(line.strip())[0] == key:
