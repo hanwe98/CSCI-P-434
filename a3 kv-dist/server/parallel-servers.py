@@ -8,6 +8,9 @@ from multiprocessing import Pool
 numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 
+def broadcast(msg):
+    return None
+
 def open_server(port):
     try:
         serverPort = port
@@ -48,7 +51,16 @@ def open_server(port):
 
                 # (test use) reply = "the value of " + key + " has been set to " + val 
                 reply = "STORED"
-                # broadcast in the background multiprocessing?
+
+                
+                # broadcast text in the background multiprocessing?
+                broadcastMsg = "broadcast" + " " + key + " " + val + " " + byte
+
+            if cmd == "broadcast":
+                # handle broadcast messages from other replica
+                val, byte = findUntilNextSpace(bv)
+                s = modify(location, key, val, byte)
+                break
 
             connectionSocket.send(str.encode(reply))
         connectionSocket.close()

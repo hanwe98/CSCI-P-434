@@ -34,7 +34,9 @@ while 1:
         s = s + " " + key + " " + value + " " + byte
     elif cmd == "get":
         s = s + " " + key
-    
+    else:
+        print(f"{cmd} : This method is not supported yet!")
+        continue
     # print(s)
     clientSocket.send(str.encode(s))
 

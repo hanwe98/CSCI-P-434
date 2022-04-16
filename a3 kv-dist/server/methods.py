@@ -1,3 +1,5 @@
+import os
+
 def findUntilNextSpace(t):
     i = 0
     for i in range(0,len(t)):
@@ -9,9 +11,17 @@ def findUntilNextSpace(t):
 def find(location, key): 
     filename = "./" + location + "/storage.txt"
 
-    # create file if not exist
-    create = open(filename, "a+")
-    create.close()
+    # -----------------------
+    # If the directory doesn't exist, should we make a brand new one or copy from existed?
+    
+    # path = "./" + location
+    # # create repo if not exist
+    # if not os.path.exists(path):
+    #     os.makedirs(path)
+    
+    # # create file if not exist
+    # create = open(filename, "a+")
+    # create.close()
 
     f = open(filename, "r")
     for line in f:
