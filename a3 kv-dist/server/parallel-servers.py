@@ -2,7 +2,8 @@ from ast import Str
 from socket import *
 import sys
 from methods import *
-import multiprocessing as mp
+from multiprocessing import Pool
+
 
 numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
@@ -49,6 +50,6 @@ def open_server(port):
         connectionSocket.close()
 
 if __name__ == '__main__':
-    with Pool(process=numberOfPorts) as pool:
+    with Pool(processes=numberOfPorts) as pool:
         pool.map(open_server, serverPorts)
     

@@ -3,6 +3,7 @@ from socket import *
 import sys
 from methods import *
 
+
 try:
     serverPort = int(sys.argv[1]) # 9889
     serverSocket = socket(AF_INET,SOCK_STREAM)

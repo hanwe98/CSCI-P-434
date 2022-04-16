@@ -12,13 +12,13 @@ try:
     serverName = sys.argv[1] # "localhost" or '127.0.0.1'
     serverPort = int(sys.argv[2]) # 9889
 
-except:
-    print("You are connected to port 9889 of the localhost")
+except: 
     serverName = "localhost"
     serverPort = 9889
 
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
+print(f"You are connected to port {serverPort} of the {serverName}")
 
 while 1:
     sentence = input("Please enter a memcached-like command (type exit to quit): \n")
