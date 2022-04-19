@@ -1,24 +1,15 @@
-from ast import Str
-from queue import PriorityQueue
 from socket import *
-from sqlite3 import Timestamp
-import sys
-from methods import *
 from multiprocessing import Pool
 import argparse
+from heapq import *
+from methods import *
 
 numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 mode = None
 
-# increment own timestamp by 1, denoting an event has taken place
-def incrementTimeStamp(ts):
-    ts[1] += 1
-
-# update own timestamp according to the sender's timestamp when receiving a msg
-def updateTimeStamp(selfTs, senderTs):
-    if senderTs[1] > selfTs[1]:
-        selfTs[1] = senderTs[1]
+# TO-DO:
+# 1. sequential
 
 def broadcast(msg):
     serverName = 'localserver'
@@ -38,15 +29,12 @@ def open_server(index):
         print("The server is ready to receive")
     except:
         print("Error on port number")
-
-    # What will happen if multiple clients connect?
-    # ----- implement ----- #
     
     location = str(port)  # file location
 
     # initialize timeStamp and priority queue for total order broadcast
     timeStamp = [index, 0]
-    pqueue = PriorityQueue()
+    pqueue = []
 
     # start to receive and process msg from the bound port
     while 1:
@@ -56,8 +44,8 @@ def open_server(index):
             text = connectionSocket.recv(1024).decode()
             incrementTimeStamp(timeStamp) # receive msg
             msg = eval(text)
-            print(str(msg))
             cmd = msg[0]
+
             if cmd == 'exit':
                 break
             
@@ -74,8 +62,7 @@ def open_server(index):
                     reply = "VALUE " + key + " " + s[1] + "\n" + s[0] + "\nEnd"
             if cmd == "set":
                 # perform set
-                val = msg[2]
-                byte = msg[3]
+                val, byte = msg[2:]
                 s = modify(location, key, val, byte)
 
                 # A broadcastMsg is a ["broadcast", key, val, byte, timeStamp : String]
@@ -92,17 +79,21 @@ def open_server(index):
 
             if cmd == "broadcast":
                 # handle broadcast messages from other replica
-                val = msg[2]
-                byte = msg[3]
-                ts = msg[4]
-                type = msg[5]
+                val, byte, ts, type = msg[2:]
                 updateTimeStamp(timeStamp, ts)
                 if type == 'message':
+                    # never pop when receive a message because you haven't got your own acknowledgement
                     s = modify(location, key, val, byte)
-                    # send acknowledgement and check if any can be poped
-                    ...
+                    # add to priority queue, and 
+                    heappush(pqueue, (timeStamp[1], ))
+                    # send acknowledgement
+                    broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), "acknowledgement"]
+                    broadcast(broadcastMsg)
+                    
                 if type == 'acknowledgement':
-                    # add to priority queue and check if any can be poped
+                    
+                    # add to priority queue, and 
+                    # check if any can be poped
                     ...
                 
                 break

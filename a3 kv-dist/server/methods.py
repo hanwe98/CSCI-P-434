@@ -56,3 +56,13 @@ def modify(location, key, value, byte):
                     fp.write(line)
         if not find:
             fp.write("\n" + s)
+
+# increment own timestamp by 1, denoting an event has taken place
+def incrementTimeStamp(ts):
+    ts[1] += 1
+
+# update own timestamp according to the sender's timestamp when receiving a msg
+def updateTimeStamp(selfTs, senderTs):
+    if senderTs[1] > selfTs[1]:
+        selfTs[1] = senderTs[1]
+    incrementTimeStamp(selfTs)
