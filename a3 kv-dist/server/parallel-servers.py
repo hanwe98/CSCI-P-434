@@ -1,4 +1,5 @@
 from ast import Str
+from queue import PriorityQueue
 from socket import *
 import sys
 from methods import *
@@ -9,10 +10,19 @@ numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 mode = None
 
-def broadcast(msg):
-    return None
+def incrementTimeStamp(ts, index):
+    ts[index] += 1
 
-def open_server(port):
+def broadcast(msg):
+    serverName = 'localserver'
+    for serverPort in serverPorts:
+        socketToOtherReplica = socket(AF_INET, SOCK_STREAM)
+        socketToOtherReplica.connect((serverName,serverPort))
+        socketToOtherReplica.send(str.encode(msg))
+        socketToOtherReplica.close()
+        
+def open_server(index):
+    port = serverPorts[index]
     try:
         serverPort = port
         serverSocket = socket(AF_INET,SOCK_STREAM)
@@ -26,12 +36,19 @@ def open_server(port):
     # ----- implement ----- #
     
     location = str(port)  # file location
+
+    # initialize timeStamp and priority queue for total order broadcast
+    timeStamp = [0 for n in range(numberOfPorts)]
+    pqueue = PriorityQueue()
+
+    # start to receive and process msg from the bound port
     while 1:
         connectionSocket, addr = serverSocket.accept()
 
         exit = False
         while 1:
             text = connectionSocket.recv(1024).decode()
+
             if text == 'exit':
                 break
             cmd, kbv = findUntilNextSpace(text)
@@ -49,15 +66,16 @@ def open_server(port):
                 val, byte = findUntilNextSpace(bv)
                 s = modify(location, key, val, byte)
 
-                reply = "STORED"
                 broadcastMsg = "broadcast" + " " + key + " " + val + " " + byte
                 if mode == 'eventual':
-                    # broadcast text in the background by multiprocessing?
-                    # non blocking broadcast
-                    ...
+                    broadcast(broadcastMsg)
                 if mode == 'sequential':
                     # blocking broadcast
-                    ...
+                    broadcast(broadcastMsg)
+                    done = False
+                    while not done:
+                        ...
+                reply = "STORED"
 
             if cmd == "broadcast":
                 # handle broadcast messages from other replica
@@ -77,5 +95,4 @@ if __name__ == '__main__':
     else:
         raise Exception(f'{args.consistency} : Not a valid mode. Please choose from eventual or sequential.')
     with Pool(processes=numberOfPorts) as pool:
-        pool.map(open_server, serverPorts)
-    
+        pool.map(open_server, range(numberOfPorts))
