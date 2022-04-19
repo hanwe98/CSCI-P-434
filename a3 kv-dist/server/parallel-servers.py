@@ -1,6 +1,7 @@
 from ast import Str
 from queue import PriorityQueue
 from socket import *
+from sqlite3 import Timestamp
 import sys
 from methods import *
 from multiprocessing import Pool
@@ -10,8 +11,14 @@ numberOfPorts = 2
 serverPorts = [9889 + n for n in range(numberOfPorts)]
 mode = None
 
-def incrementTimeStamp(ts, index):
-    ts[index] += 1
+# increment own timestamp by 1, denoting an event has taken place
+def incrementTimeStamp(ts):
+    ts[1] += 1
+
+# update own timestamp according to the sender's timestamp when receiving a msg
+def updateTimeStamp(selfTs, senderTs):
+    if senderTs[1] > selfTs[1]:
+        selfTs[1] = senderTs[1]
 
 def broadcast(msg):
     serverName = 'localserver'
@@ -38,35 +45,41 @@ def open_server(index):
     location = str(port)  # file location
 
     # initialize timeStamp and priority queue for total order broadcast
-    timeStamp = [0 for n in range(numberOfPorts)]
+    timeStamp = [index, 0]
     pqueue = PriorityQueue()
 
     # start to receive and process msg from the bound port
     while 1:
         connectionSocket, addr = serverSocket.accept()
 
-        exit = False
         while 1:
             text = connectionSocket.recv(1024).decode()
-
-            if text == 'exit':
+            incrementTimeStamp(timeStamp) # receive msg
+            msg = eval(text)
+            print(str(msg))
+            cmd = msg[0]
+            if cmd == 'exit':
                 break
-            cmd, kbv = findUntilNextSpace(text)
-            key, bv = findUntilNextSpace(kbv)
+            
+            key = msg[1]
             reply = "The given method is not supported yet!"
+
             if cmd == "get":
                 # perform get
                 s = find(location, key)
+                incrementTimeStamp(timeStamp) # call find
                 if s is None:
                     reply = "the value of " + key + " is not found in the storage system"
                 else:
                     reply = "VALUE " + key + " " + s[1] + "\n" + s[0] + "\nEnd"
             if cmd == "set":
                 # perform set
-                val, byte = findUntilNextSpace(bv)
+                val = msg[2]
+                byte = msg[3]
                 s = modify(location, key, val, byte)
 
-                broadcastMsg = "broadcast" + " " + key + " " + val + " " + byte
+                # A broadcastMsg is a ["broadcast", key, val, byte, timeStamp : String]
+                broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), 'message']
                 if mode == 'eventual':
                     broadcast(broadcastMsg)
                 if mode == 'sequential':
@@ -79,8 +92,19 @@ def open_server(index):
 
             if cmd == "broadcast":
                 # handle broadcast messages from other replica
-                val, byte = findUntilNextSpace(bv)
-                s = modify(location, key, val, byte)
+                val = msg[2]
+                byte = msg[3]
+                ts = msg[4]
+                type = msg[5]
+                updateTimeStamp(timeStamp, ts)
+                if type == 'message':
+                    s = modify(location, key, val, byte)
+                    # send acknowledgement and check if any can be poped
+                    ...
+                if type == 'acknowledgement':
+                    # add to priority queue and check if any can be poped
+                    ...
+                
                 break
 
             connectionSocket.send(str.encode(reply))

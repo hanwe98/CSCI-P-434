@@ -22,23 +22,28 @@ print(f"You are connected to port {serverPort} of the {serverName}")
 
 while 1:
     sentence = input("Please enter a memcached-like command (type exit to quit): \n")
-    
+    msg = []
     if sentence == 'exit':
-        clientSocket.send(str.encode(sentence))
+        msg.append('exit')
+        clientSocket.send(str.encode(str(msg)))
         break
+    # parse the input from user
     cmd, keyByte = findUntilNextSpace(sentence)
     key, byte = findUntilNextSpace(keyByte)
-    s = cmd
+
+    msg.append(cmd)
     if cmd == "set":
         value = input()
-        s = s + " " + key + " " + value + " " + byte
+        msg.append(key)
+        msg.append(value)
+        msg.append(byte)
     elif cmd == "get":
-        s = s + " " + key
+        msg.append(key)
     else:
         print(f"{cmd} : This method is not supported yet!")
         continue
-    # print(s)
-    clientSocket.send(str.encode(s))
+    print(str(msg))
+    clientSocket.send(str.encode(str(msg)))
 
     modifiedSentence = clientSocket.recv(1024)
     print(modifiedSentence.decode())
