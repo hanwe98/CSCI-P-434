@@ -21,28 +21,31 @@ clientSocket.connect((serverName,serverPort))
 print(f"You are connected to port {serverPort} of the {serverName}")
 
 while 1:
-    sentence = input("Please enter a memcached-like command (type exit to quit): \n")
-    msg = []
-    if sentence == 'exit':
-        msg.append('exit')
-        clientSocket.send(str.encode(str(msg)))
-        break
-    # parse the input from user
-    cmd, keyByte = findUntilNextSpace(sentence)
-    key, byte = findUntilNextSpace(keyByte)
+    # sentence = input("Please enter a memcached-like command (type exit to quit): \n")
+    # msg = []
+    # if sentence == 'exit':
+    #     msg.append('exit')
+    #     clientSocket.send(str.encode(str(msg)))
+    #     break
+    # # parse the input from user
+    # cmd, keyByte = findUntilNextSpace(sentence)
+    # key, byte = findUntilNextSpace(keyByte)
 
-    msg.append(cmd)
-    if cmd == "set":
-        value = input()
-        msg.append(key)
-        msg.append(value)
-        msg.append(byte)
-    elif cmd == "get":
-        msg.append(key)
-    else:
-        print(f"{cmd} : This method is not supported yet!")
-        continue
-    print(str(msg))
+    # msg.append(cmd)
+    # if cmd == "set":
+    #     value = input()
+    #     msg.append(key)
+    #     msg.append(value)
+    #     msg.append(byte)
+    # elif cmd == "get":
+    #     msg.append(key)
+    # else:
+    #     print(f"{cmd} : This method is not supported yet!")
+    #     continue
+    # print(str(msg))
+
+    # testing case: seting x to be 3
+    msg = ['set', 'x', '3', '3']
     clientSocket.send(str.encode(str(msg)))
 
     modifiedSentence = clientSocket.recv(1024)

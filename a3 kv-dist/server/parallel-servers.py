@@ -123,7 +123,8 @@ def open_server(index):
                     # pop only if the msg in the first in the priority queue and has collected all acknowledgements
                     firstKey = pqueue[0][1]
                     if acknowlegements.get(firstKey) == numberOfPorts:
-                        acknowlegements.pop(firstKey)    
+                        acknowlegements.pop(firstKey)
+                        heappop(pqueue, firstKey)
                 # There is no need to reply to a broadcast, so skip reply and close the socket        
                 # print(f"{port} exit receiving broadcast")
                 break
