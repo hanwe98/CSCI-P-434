@@ -1,8 +1,6 @@
 (2.0.1/ 2.0.2) Is there a smart way to spawn multiple server in python?
 	- Every testing time has to mannually open multiple servers.
 
-(2.1) Does the word "replica" mean, the servers have the exact same content?
-
 (2.2) Where are the provided clients?
 
 what does it mean by saying an object has a primary replica.

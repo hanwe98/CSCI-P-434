@@ -20,7 +20,6 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 print(f"You are connected to port {serverPort} of the {serverName}")
 
-while 1:
     # sentence = input("Please enter a memcached-like command (type exit to quit): \n")
     # msg = []
     # if sentence == 'exit':
@@ -45,10 +44,11 @@ while 1:
     # print(str(msg))
 
     # testing case: seting x to be 3
-    msg = ['set', 'x', '3', '3']
-    clientSocket.send(str.encode(str(msg)))
+msg = ['set', 'x', '3', '3']
+msg = ['get', 'wa']
+clientSocket.send(str.encode(str(msg)))
 
-    modifiedSentence = clientSocket.recv(1024)
-    print(modifiedSentence.decode())
+modifiedSentence = clientSocket.recv(1024)
+print(modifiedSentence.decode())
 
 clientSocket.close()
