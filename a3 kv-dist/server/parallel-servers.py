@@ -2,6 +2,7 @@ from socket import *
 import argparse
 from heapq import *
 from methods import *
+from threading import *
 import threading
 
 numberOfPorts = 3
@@ -11,6 +12,7 @@ mode = None
 timeStamps = [None for n in range(numberOfPorts)]
 pqueues = [None for n in range(numberOfPorts)]
 ackDicts = [None for n in range(numberOfPorts)]
+mutexes = [Semaphore(1) for n in range(numberOfPorts)]
 
 def broadcast(msg):
     serverName = 'localhost'
@@ -38,6 +40,7 @@ def receive_servermsg(serverSocket, index):
     pqueue = pqueues[index]
     ackDict = ackDicts[index]
     serverPort = serverPorts[index]
+    mutex = mutexes[index]
     location = str(index)
     print(f'{serverPort} started')
 
@@ -89,13 +92,15 @@ def receive_servermsg(serverSocket, index):
                 heappop(pqueue)
                 modify(location, key, val, byte)
                 print(f'{serverPort} modified')
+                if mode == 'sequential':
+                    mutex.release()
         
-
 def receive_clientmsg(clientSocket, index):
     global timeStamps, pqueues, ackDicts
     # initialize variables
     timeStamp = timeStamps[index]
     clientPort = clientPorts[index]
+    mutex = mutexes[index]
     location = str(index)
     print(f'{clientPort} started')
     # start receiving msg from clients
@@ -140,9 +145,7 @@ def receive_clientmsg(clientSocket, index):
             if mode == 'sequential':
                 # blocking broadcast
                 broadcast(broadcastMsg)
-                done = False
-                while not done:
-                    ...
+                mutex.acquire()
             reply = "STORED"
         connectionSocket.send(str.encode(reply))
         connectionSocket.close()
