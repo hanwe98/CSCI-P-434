@@ -1,15 +1,13 @@
 from socket import *
-from multiprocessing import Pool
 import argparse
 from heapq import *
 from methods import *
-from multiprocessing import Process
 import threading
 
-numberOfPorts = 1
+numberOfPorts = 3
 clientPorts = [9889 + n for n in range(numberOfPorts)]
 serverPorts = [10000 + n for n in range(numberOfPorts)]
-mode = 'eventual'
+mode = None
 timeStamps = [None for n in range(numberOfPorts)]
 pqueues = [None for n in range(numberOfPorts)]
 ackDicts = [None for n in range(numberOfPorts)]
@@ -18,7 +16,7 @@ def broadcast(msg):
     serverName = 'localhost'
     for serverPort in serverPorts:
         socketToOtherReplica = socket(AF_INET, SOCK_STREAM)
-        socketToOtherReplica.connect((serverName,serverPorts))
+        socketToOtherReplica.connect((serverName,serverPort))
         print(f"sending {msg} to {serverPort}")
         socketToOtherReplica.send(str.encode(msg))
         socketToOtherReplica.close()
@@ -27,7 +25,7 @@ def portSetup(port):
     try:
         currentSocket = socket(AF_INET,SOCK_STREAM)
         currentSocket.bind(('',port))
-        currentSocket.listen(1)
+        currentSocket.listen()
         print("The server is ready to receive")
         return currentSocket
     except:
@@ -41,10 +39,7 @@ def receive_servermsg(serverSocket, index):
     ackDict = ackDicts[index]
     serverPort = serverPorts[index]
     location = str(index)
-    print(timeStamp)
-    print(pqueue)
-    print(ackDict)
-    print(serverPort)
+    print(f'{serverPort} started')
 
     while 1:
         connectionSocket, addr = serverSocket.accept()
@@ -54,39 +49,46 @@ def receive_servermsg(serverSocket, index):
 
         # parse input
         print(f"{serverPort} receives: {text}")
-        incrementTimeStamp(timeStamp) # receive msg
+        
         msg = eval(text)
         cmd, key, val, byte, ts, type = msg
 
         # handle broadcast
-        if cmd == "broadcast":
-            updateTimeStamp(timeStamp, eval(ts))
+        updateTimeStamp(timeStamp, eval(ts)) # updating own timestamp according to timestamp on msg
 
-            # never pop when receive a message because you haven't got your own acknowledgement
-            if type == 'message': 
-                # add to priority queue
-                keyOfHeap = timeStamp[1] * 100 + timeStamp[0]
-                heappush(pqueue, (keyOfHeap, key))
+        # never pop when receive a message because you haven't got your own acknowledgement
+        if type == 'message': 
+            # add to priority queue
+            keyOfHeap = timeStamp[1] * 100 + timeStamp[0]
+            heappush(pqueue, (keyOfHeap, key))
 
-                # send acknowledgement
-                broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), "acknowledgement"]
-                broadcast(broadcastMsg)
-                
-            if type == 'acknowledgement':
-                # add to acknowlegement dictionary and check if any can be poped
-                count = None
-                if key not in ackDict:
-                    count = 1
-                else:
-                    count = ackDict.get(key) + 1
-                ackDict.update({key, count})
-                
-                # pop only if the msg in the first in the priority queue and has collected all acknowledgements
-                firstKey = pqueue[0][1]
-                if firstKey in ackDict and ackDict.get(firstKey) == numberOfPorts:
-                    ackDict.pop(firstKey)
-                    heappop(pqueue, firstKey)
-                    modify(location, key, val, byte)
+            # send acknowledgement
+            incrementTimeStamp(timeStamp) # send broadcast
+            broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), "acknowledgement"]
+            broadcast(str(broadcastMsg))
+            
+        if type == 'acknowledgement':
+            # add to acknowlegement dictionary and check if any can be poped
+            count = None
+            if key not in ackDict:
+                count = 1
+            else:
+                count = ackDict.get(key) + 1
+            ackDict.update({key : count})
+            
+            print(f'{serverPort} current pqueue: {pqueue}')
+            print(f'{serverPort} current ackDict: {ackDict}')
+            
+            # pop only if the msg in the first in the priority queue and has collected all acknowledgements
+            firstKey = pqueue[0][1]
+            print(f'{serverPort} current firstKey: {firstKey}')
+            print(f'{serverPort} current numberOfPorts: {numberOfPorts}')
+            if ackDict.get(firstKey) == numberOfPorts:
+                print('should pop now')
+                ackDict.pop(firstKey)
+                heappop(pqueue)
+                modify(location, key, val, byte)
+                print(f'{serverPort} modified')
         
 
 def receive_clientmsg(clientSocket, index):
@@ -95,16 +97,14 @@ def receive_clientmsg(clientSocket, index):
     timeStamp = timeStamps[index]
     clientPort = clientPorts[index]
     location = str(index)
-    print(timeStamps)
-    print(clientPorts)
-    print(index)
+    print(f'{clientPort} started')
     # start receiving msg from clients
     while 1:
         connectionSocket, addr = clientSocket.accept()
 
         text = connectionSocket.recv(1024).decode()
-        print(f"{clientPort}:  receive text from client")
-        print(text)
+        print(f"{clientPort}:  receive {text}")
+        
         incrementTimeStamp(timeStamp) # receive msg
         msg = eval(text)
         cmd = msg[0]
@@ -120,6 +120,7 @@ def receive_clientmsg(clientSocket, index):
         if cmd == "get":
             s = find(location, key)
             incrementTimeStamp(timeStamp) # call find
+            print(f'timestamp after retrieving data from storage : {timeStamps}')
             if s is None:
                 reply = "the value of " + key + " is not found in the storage system"
             else:
@@ -130,6 +131,7 @@ def receive_clientmsg(clientSocket, index):
             val, byte = msg[2:]
 
             # A broadcastMsg is a ["broadcast", key, val, byte, timeStamp : String]
+            incrementTimeStamp(timeStamp) # call broadcast
             broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), 'message']
             if mode == 'eventual':
                 print(f"{clientPort} start broadcasting")
@@ -159,9 +161,9 @@ def open_server(index):
     ackDicts[index] = {}
 
     toClient = threading.Thread(target=receive_clientmsg, args=(clientSocket, index))
-    #toServer = Process(target=receive_servermsg, args=(serverSocket, index))
+    toServer = threading.Thread(target=receive_servermsg, args=(serverSocket, index))
     toClient.start()
-    #toServer.start()
+    toServer.start()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

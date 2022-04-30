@@ -44,8 +44,8 @@ print(f"You are connected to port {serverPort} of the {serverName}")
     # print(str(msg))
 
     # testing case: seting x to be 3
-msg = ['set', 'x', '3', '3']
-msg = ['get', 'wa']
+msg = ['set', 'x', '42', '1']
+# msg = ['get', 'wa']
 clientSocket.send(str.encode(str(msg)))
 
 modifiedSentence = clientSocket.recv(1024)
