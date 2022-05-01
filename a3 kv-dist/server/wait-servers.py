@@ -4,6 +4,7 @@ from heapq import *
 from methods import *
 from threading import *
 import threading
+import time
 
 numberOfPorts = 3
 clientPorts = [9889 + n for n in range(numberOfPorts)]
@@ -12,7 +13,7 @@ mode = None
 timeStamps = [None for n in range(numberOfPorts)]
 pqueues = [None for n in range(numberOfPorts)]
 ackDicts = [None for n in range(numberOfPorts)]
-mutexes = [Semaphore(1) for n in range(numberOfPorts)]
+mutexes = [Semaphore(0) for n in range(numberOfPorts)]
 
 def broadcast(msg):
     serverName = 'localhost'
@@ -90,6 +91,7 @@ def receive_servermsg(serverSocket, index):
                 print('should pop now')
                 ackDict.pop(firstKey)
                 heappop(pqueue)
+                time.sleep(5)
                 modify(location, key, val, byte)
                 print(f'{serverPort} modified')
                 if mode == 'sequential':
@@ -144,7 +146,7 @@ def receive_clientmsg(clientSocket, index):
                 print(f"{clientPort} exit from broadcast")
             if mode == 'sequential':
                 # blocking broadcast
-                broadcast(broadcastMsg)
+                broadcast(str(broadcastMsg))
                 mutex.acquire()
             reply = "STORED"
         connectionSocket.send(str.encode(reply))
