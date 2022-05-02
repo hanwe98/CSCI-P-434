@@ -23,7 +23,6 @@ def broadcast(msg):
     for serverPort in serverPorts:
         socketToOtherReplica = socket(AF_INET, SOCK_STREAM)
         socketToOtherReplica.connect((serverName,serverPort))
-        print(f"sending {msg} to {serverPort}")
         socketToOtherReplica.send(str.encode(msg))
         socketToOtherReplica.close()
 
@@ -57,10 +56,8 @@ def receive_servermsg(serverSocket, index):
 
         text = connectionSocket.recv(1024).decode()
         connectionSocket.close()
-
-        # parse input
-        print(f"{serverPort} receives: {text}")
         
+         # parse input
         msg = eval(text)
         cmd, key, val, byte, ts, type = msg
 
@@ -71,7 +68,6 @@ def receive_servermsg(serverSocket, index):
         if type == 'message': 
             # add to priority queue
             encodedTS = encodeTimeStamp(eval(ts))
-            print(f'encodedTS is {encodedTS}')
             heappush(pqueue, encodedTS)
 
             # send acknowledgement
@@ -89,15 +85,9 @@ def receive_servermsg(serverSocket, index):
                 count = ackDict.get(ts) + 1
             ackDict.update({ts : count})
             
-            print(f'{serverPort} current pqueue: {pqueue}')
-            print(f'{serverPort} current ackDict: {ackDict}')
-            
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
             firstTS = pqueue[0]
-            print(f'{serverPort} current firstKey: {firstTS}')
-            print(f'{serverPort} current numberOfPorts: {numberOfPorts}')
             if encodeTimeStamp(ts) == firstTS and ackDict.get(ts) == numberOfPorts:
-                print('should pop now')
                 ackDict.pop(ts)
                 heappop(pqueue)
                 modify(location, key, val, byte)
@@ -114,13 +104,10 @@ def receive_clientmsg(clientSocket, index):
     curWrite = curWrites[index]
 
     location = str(index)
-    print(f'{clientPort} started')
     # start receiving msg from clients
     while 1:
         connectionSocket, addr = clientSocket.accept()
-
         text = connectionSocket.recv(1024).decode()
-        print(f"{clientPort}:  receive {text}")
         
         incrementTimeStamp(timeStamp) # receive msg
         msg = eval(text)
@@ -137,7 +124,6 @@ def receive_clientmsg(clientSocket, index):
         if cmd == "get":
             s = find(location, key)
             incrementTimeStamp(timeStamp) # call find
-            print(f'timestamp after retrieving data from storage : {timeStamps}')
             if s is None:
                 reply = "the value of " + key + " is not found in the storage system"
             else:
@@ -151,9 +137,7 @@ def receive_clientmsg(clientSocket, index):
             incrementTimeStamp(timeStamp) # call broadcast
             broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), 'message']
             if mode == 'eventual':
-                print(f"{clientPort} start broadcasting")
                 broadcast(str(broadcastMsg))
-                print(f"{clientPort} exit from broadcast")
             if mode == 'sequential':
                 # blocking broadcast
                 broadcast(str(broadcastMsg))
