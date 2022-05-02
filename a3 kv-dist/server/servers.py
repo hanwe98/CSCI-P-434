@@ -4,16 +4,18 @@ from heapq import *
 from methods import *
 from threading import *
 import threading
+import time
 
-
-numberOfReplicas = 3
-clientPorts = [9889 + n for n in range(numberOfReplicas)]
-serverPorts = [10000 + n for n in range(numberOfReplicas)]
-mode = None
-timeStamps = [None for n in range(numberOfReplicas)]
-pqueues = [None for n in range(numberOfReplicas)]
-ackDicts = [None for n in range(numberOfReplicas)]
-mutexes = [Semaphore(0) for n in range(numberOfReplicas)]
+numberOfPorts = 2
+clientPorts = [9889 + n for n in range(numberOfPorts)]   # [ListOf Integer]
+serverPorts = [10000 + n for n in range(numberOfPorts)]  # [ListOf Integer]
+mode = None                                              # 'eventual' or 'sequential'
+                                                         # A TimeStamp is a [serverID, time] : [Integer, Integer]
+timeStamps = [None for n in range(numberOfPorts)]        # [ListOf TimeStamp] 
+pqueues = [None for n in range(numberOfPorts)]           # [ListOf [PQ encode(TimeStamp)]]  
+ackDicts = [None for n in range(numberOfPorts)]          # [ListOf [DictionaryOf String Number]] 
+mutexes = [Semaphore(0) for n in range(numberOfPorts)]   # [ListOf Semaphore]
+curWrites = [None for n in range(numberOfPorts)]         # [Listof String]
 
 def broadcast(msg):
     serverName = 'localhost'
@@ -42,6 +44,8 @@ def receive_servermsg(serverSocket, index):
     ackDict = ackDicts[index]
     serverPort = serverPorts[index]
     mutex = mutexes[index]
+    curWrite = curWrites[index]
+
     location = str(index)
     print(f'{serverPort} started')
 
@@ -63,37 +67,39 @@ def receive_servermsg(serverSocket, index):
         # never pop when receive a message because you haven't got your own acknowledgement
         if type == 'message': 
             # add to priority queue
-            keyOfHeap = timeStamp[1] * 100 + timeStamp[0]
-            heappush(pqueue, (keyOfHeap, key))
+            encodedTS = encodeTimeStamp(eval(ts))
+            print(f'encodedTS is {encodedTS}')
+            heappush(pqueue, encodedTS)
 
             # send acknowledgement
             incrementTimeStamp(timeStamp) # send broadcast
-            broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), "acknowledgement"]
+            broadcastMsg = [ts, key, val, byte, str(timeStamp), "acknowledgement"]
             broadcast(str(broadcastMsg))
             
         if type == 'acknowledgement':
             # add to acknowlegement dictionary and check if any can be poped
+            ts = cmd
             count = None
-            if key not in ackDict:
+            if ts not in ackDict:
                 count = 1
             else:
-                count = ackDict.get(key) + 1
-            ackDict.update({key : count})
+                count = ackDict.get(ts) + 1
+            ackDict.update({ts : count})
             
             print(f'{serverPort} current pqueue: {pqueue}')
             print(f'{serverPort} current ackDict: {ackDict}')
             
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
-            firstKey = pqueue[0][1]
-            print(f'{serverPort} current firstKey: {firstKey}')
-            print(f'{serverPort} current numberOfPorts: {numberOfReplicas}')
-            if ackDict.get(firstKey) == numberOfReplicas:
+            firstTS = pqueue[0]
+            print(f'{serverPort} current firstKey: {firstTS}')
+            print(f'{serverPort} current numberOfPorts: {numberOfPorts}')
+            if encodeTimeStamp(ts) == firstTS and ackDict.get(ts) == numberOfPorts:
                 print('should pop now')
-                ackDict.pop(firstKey)
+                ackDict.pop(ts)
                 heappop(pqueue)
+                time.sleep(5)
                 modify(location, key, val, byte)
-                print(f'{serverPort} modified')
-                if mode == 'sequential':
+                if mode == 'sequential' and curWrite == ts:
                     mutex.release()
         
 def receive_clientmsg(clientSocket, index):
@@ -102,6 +108,8 @@ def receive_clientmsg(clientSocket, index):
     timeStamp = timeStamps[index]
     clientPort = clientPorts[index]
     mutex = mutexes[index]
+    curWrite = curWrites[index]
+
     location = str(index)
     print(f'{clientPort} started')
     # start receiving msg from clients
@@ -146,6 +154,7 @@ def receive_clientmsg(clientSocket, index):
             if mode == 'sequential':
                 # blocking broadcast
                 broadcast(str(broadcastMsg))
+                curWrite = str(timeStamp)
                 mutex.acquire()
             reply = "STORED"
         connectionSocket.send(str.encode(reply))
@@ -178,12 +187,9 @@ if __name__ == '__main__':
     else:
         raise Exception(f'{args.consistency} : Not a valid mode. Please choose from either eventual or sequential.')
 
-    threads = [None] * numberOfReplicas
-    for i in range(numberOfReplicas):
-        open_server(i)
-        
-    # for i in range(numberOfPorts):
-    #     threads[i] = threading.Thread(target = open_server, args=(i,))
-    #     threads[i].start()
-    # for i in range(numberOfPorts):
-    #     threads[i].join()
+    threads = [None] * numberOfPorts
+    for i in range(numberOfPorts):
+        threads[i] = threading.Thread(target = open_server, args=(i,))
+        threads[i].start()
+    for i in range(numberOfPorts):
+        threads[i].join()

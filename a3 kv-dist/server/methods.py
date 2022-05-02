@@ -66,3 +66,6 @@ def updateTimeStamp(selfTs, senderTs):
     if senderTs[1] > selfTs[1]:
         selfTs[1] = senderTs[1]
     incrementTimeStamp(selfTs)
+
+def encodeTimeStamp(timeStamp):
+    return timeStamp[1] * 100 + timeStamp[0]
