@@ -9,7 +9,6 @@ def findUntilNextSpace(t):
 
 # find the value associated to the given key in the storage file system.
 def find(location, key): 
-    print(os.getcwd())
     filename = "./server/" + location + "/storage.txt"
 
     # -----------------------
