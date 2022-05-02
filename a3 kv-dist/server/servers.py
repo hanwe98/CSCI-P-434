@@ -17,6 +17,7 @@ ackDicts = [None for n in range(numberOfPorts)]          # [ListOf [DictionaryOf
 mutexes = [Semaphore(0) for n in range(numberOfPorts)]   # [ListOf Semaphore]
 curWrites = [None for n in range(numberOfPorts)]         # [Listof String]
 
+# broadcast : broadcast the given message to all serverports
 def broadcast(msg):
     serverName = 'localhost'
     for serverPort in serverPorts:
@@ -26,6 +27,7 @@ def broadcast(msg):
         socketToOtherReplica.send(str.encode(msg))
         socketToOtherReplica.close()
 
+# portSetup : return a socket that bind and listen to the given port number
 def portSetup(port):
     try:
         currentSocket = socket(AF_INET,SOCK_STREAM)
@@ -36,6 +38,7 @@ def portSetup(port):
     except:
         print("Error on port number")
 
+# receive_servermsg : start to receive and interpret the messages transferred between servers
 def receive_servermsg(serverSocket, index):
     global timeStamps, pqueues, ackDicts
     # initialize variables
@@ -101,7 +104,8 @@ def receive_servermsg(serverSocket, index):
                 modify(location, key, val, byte)
                 if mode == 'sequential' and curWrite == ts:
                     mutex.release()
-        
+
+# receive_clientmsg : start to receive and interpret the messages sent from clients     
 def receive_clientmsg(clientSocket, index):
     global timeStamps, pqueues, ackDicts
     # initialize variables
@@ -160,6 +164,8 @@ def receive_clientmsg(clientSocket, index):
         connectionSocket.send(str.encode(reply))
         connectionSocket.close()
 
+# open_server: setting up the key variables such as timestamp, pqueue, and ackDict;
+#              open one thread for handling clients, another thread for handling servers
 def open_server(index):
     global timeStamps, pqueues, ackDicts
     clientPort = clientPorts[index]
