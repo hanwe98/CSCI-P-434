@@ -8,7 +8,7 @@ import time
 
 numberOfPorts = 2
 clientPorts = [9889 + n for n in range(numberOfPorts)]   # [ListOf Integer]
-serverPorts = [10000 + n for n in range(numberOfPorts)]  # [ListOf Integer]
+serverPorts = [10050 + n for n in range(numberOfPorts)]  # [ListOf Integer]
 mode = None                                              # 'eventual' or 'sequential'
                                                          # A TimeStamp is a [serverID, time] : [Integer, Integer]
 timeStamps = [None for n in range(numberOfPorts)]        # [ListOf TimeStamp] 
@@ -32,7 +32,7 @@ def portSetup(port):
         currentSocket = socket(AF_INET,SOCK_STREAM)
         currentSocket.bind(('',port))
         currentSocket.listen()
-        print("The server is ready to receive")
+        print(f"{port}The server is ready to receive")
         return currentSocket
     except:
         print("Error on port number")
@@ -44,7 +44,6 @@ def receive_servermsg(serverSocket, index):
     timeStamp = timeStamps[index]
     pqueue = pqueues[index]
     ackDict = ackDicts[index]
-    serverPort = serverPorts[index]
     mutex = mutexes[index]
     curWrite = curWrites[index]
 
@@ -55,11 +54,10 @@ def receive_servermsg(serverSocket, index):
 
         text = connectionSocket.recv(1024).decode()
         connectionSocket.close()
-        print(f"{serverPort} receives: {text}")
+        
          # parse input
         msg = eval(text)
         cmd, key, val, byte, ts, type = msg
-
         # handle broadcast
         updateTimeStamp(timeStamp, eval(ts)) # updating own timestamp according to timestamp on msg
 
@@ -86,9 +84,11 @@ def receive_servermsg(serverSocket, index):
             
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
             firstTS = pqueue[0]
-            if encodeTimeStamp(ts) == firstTS and ackDict.get(ts) == numberOfPorts:
+
+            if encodeTimeStamp(eval(ts)) == firstTS and ackDict.get(ts) == numberOfPorts:
                 ackDict.pop(ts)
                 heappop(pqueue)
+                time.sleep(5)
                 modify(location, key, val, byte)
                 if mode == 'sequential' and curWrite == ts:
                     mutex.release()
@@ -110,7 +110,7 @@ def receive_clientmsg(clientSocket, index):
         incrementTimeStamp(timeStamp) # receive msg
         msg = eval(text)
         cmd = msg[0]
-        print(f"{clientPort} receives: {text}")
+
         # perform exit
         if cmd == 'exit':
             break

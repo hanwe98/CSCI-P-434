@@ -58,7 +58,6 @@ def receive_servermsg(serverSocket, index):
          # parse input
         msg = eval(text)
         cmd, key, val, byte, ts, type = msg
-        print(f"{serverPorts[index]} receives: {text}")
         # handle broadcast
         updateTimeStamp(timeStamp, eval(ts)) # updating own timestamp according to timestamp on msg
 
@@ -83,23 +82,16 @@ def receive_servermsg(serverSocket, index):
                 count = ackDict.get(ts) + 1
             ackDict.update({ts : count})
             
-            print(f'{serverPorts[index]} current pqueue: {pqueue}')
-            print(f'{serverPorts[index]} current ackDict: {ackDict}')
-
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
             firstTS = pqueue[0]
-            print(f'{serverPorts[index]} current firstKey: {firstTS}')
-            print(f'{serverPorts[index]} current numberOfPorts: {numberOfPorts}')
-            print(f'{serverPorts[index]} encoded ts: {encodeTimeStamp(eval(ts))}')
+
             if encodeTimeStamp(eval(ts)) == firstTS and ackDict.get(ts) == numberOfPorts:
                 ackDict.pop(ts)
                 heappop(pqueue)
                 time.sleep(5)
-                print(f"{serverPorts[index]} here")
                 modify(location, key, val, byte)
                 if mode == 'sequential' and curWrite == ts:
                     mutex.release()
-                print(f"{serverPorts[index]} done writing")
 
 # receive_clientmsg : start to receive and interpret the messages sent from clients     
 def receive_clientmsg(clientSocket, index):
@@ -118,8 +110,6 @@ def receive_clientmsg(clientSocket, index):
         incrementTimeStamp(timeStamp) # receive msg
         msg = eval(text)
         cmd = msg[0]
-
-        print(f"{clientPort} receives: {text}")
 
         # perform exit
         if cmd == 'exit':
