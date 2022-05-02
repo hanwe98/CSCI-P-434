@@ -9,7 +9,8 @@ def findUntilNextSpace(t):
 
 # find the value associated to the given key in the storage file system.
 def find(location, key): 
-    filename = "./" + location + "/storage.txt"
+    print(os.getcwd())
+    filename = "./server/" + location + "/storage.txt"
 
     # -----------------------
     # If the directory doesn't exist, should we make a brand new one or copy from existed?
@@ -35,7 +36,7 @@ def find(location, key):
 
 # if the key is in the file of storage, update the associated value to the given value
 def modify(location, key, value, byte):
-    filename = "./" + location + "/storage.txt"
+    filename = "./server/" + location + "/storage.txt"
 
     # create file if not exist
     create = open(filename, "a+")

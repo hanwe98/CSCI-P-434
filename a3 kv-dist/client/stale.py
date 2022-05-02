@@ -11,13 +11,15 @@ def sendmsg(msg):
     print(modifiedSentence.decode())
     clientSocket.close()
 try:
-    serverName = sys.argv[1] # "localhost" or '127.0.0.1'
-    serverPort = int(sys.argv[2]) # 9889
+    key = sys.argv[1]
+    val = sys.argv[2]
 except: 
-    serverName = "localhost"
-    serverPort = 9889
+    key = 'x'
+    val = '42'
+serverName = "localhost"
+serverPort = 9889
 
-msg1 = ['set', 'x', '0', '1']
-msg2 = ['get', 'x']
+msg1 = ['set', key, val, '1']
+msg2 = ['get', key]
 sendmsg(msg1)
 sendmsg(msg2)

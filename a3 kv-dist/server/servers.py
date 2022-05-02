@@ -49,14 +49,13 @@ def receive_servermsg(serverSocket, index):
     curWrite = curWrites[index]
 
     location = str(index)
-    print(f'{serverPort} started')
 
     while 1:
         connectionSocket, addr = serverSocket.accept()
 
         text = connectionSocket.recv(1024).decode()
         connectionSocket.close()
-        
+        print(f"{serverPort} receives: {text}")
          # parse input
         msg = eval(text)
         cmd, key, val, byte, ts, type = msg
@@ -96,12 +95,11 @@ def receive_servermsg(serverSocket, index):
 
 # receive_clientmsg : start to receive and interpret the messages sent from clients     
 def receive_clientmsg(clientSocket, index):
-    global timeStamps, pqueues, ackDicts
+    global timeStamps, pqueues, ackDicts, curWrites
     # initialize variables
     timeStamp = timeStamps[index]
     clientPort = clientPorts[index]
     mutex = mutexes[index]
-    curWrite = curWrites[index]
 
     location = str(index)
     # start receiving msg from clients
@@ -112,7 +110,7 @@ def receive_clientmsg(clientSocket, index):
         incrementTimeStamp(timeStamp) # receive msg
         msg = eval(text)
         cmd = msg[0]
-
+        print(f"{clientPort} receives: {text}")
         # perform exit
         if cmd == 'exit':
             break
@@ -141,7 +139,7 @@ def receive_clientmsg(clientSocket, index):
             if mode == 'sequential':
                 # blocking broadcast
                 broadcast(str(broadcastMsg))
-                curWrite = str(timeStamp)
+                curWrites[index] = str(timeStamp)
                 mutex.acquire()
             reply = "STORED"
         connectionSocket.send(str.encode(reply))
