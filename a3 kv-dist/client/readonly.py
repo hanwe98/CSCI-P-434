@@ -10,17 +10,9 @@ def sendmsg(msg):
     modifiedSentence = clientSocket.recv(1024)
     print(modifiedSentence.decode())
     clientSocket.close()
-try:
-    key = sys.argv[1]
-    val = sys.argv[2]
-except: 
-    key = 'x'
-    val = '42'
-serverName = "localhost"
-serverPort = 9889
 
-msg1 = ['set', key, val, '1']
-msg2 = ['get', key]
-sendmsg(msg1)
-print('set ok!')
+serverName = "localhost"
+serverPort = 9890
+
+msg2 = ['get', 'x']
 sendmsg(msg2)

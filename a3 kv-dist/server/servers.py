@@ -6,7 +6,7 @@ from threading import *
 import threading
 import time
 
-numberOfPorts = 2
+numberOfPorts = 3
 clientPorts = [9889 + n for n in range(numberOfPorts)]   # [ListOf Integer]
 serverPorts = [10050 + n for n in range(numberOfPorts)]  # [ListOf Integer]
 mode = None                                              # 'eventual' or 'sequential'
@@ -39,19 +39,16 @@ def portSetup(port):
 
 # receive_servermsg : start to receive and interpret the messages transferred between servers
 def receive_servermsg(serverSocket, index):
-    global timeStamps, pqueues, ackDicts
+    global timeStamps, pqueues, ackDicts, curWrites
     # initialize variables
     timeStamp = timeStamps[index]
     pqueue = pqueues[index]
     ackDict = ackDicts[index]
-    mutex = mutexes[index]
-    curWrite = curWrites[index]
 
     location = str(index)
 
     while 1:
         connectionSocket, addr = serverSocket.accept()
-
         text = connectionSocket.recv(1024).decode()
         connectionSocket.close()
         
@@ -84,13 +81,12 @@ def receive_servermsg(serverSocket, index):
             
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
             firstTS = pqueue[0]
-
             if encodeTimeStamp(eval(ts)) == firstTS and ackDict.get(ts) == numberOfPorts:
                 ackDict.pop(ts)
                 heappop(pqueue)
                 modify(location, key, val, byte)
-                if mode == 'sequential' and curWrite == ts:
-                    mutex.release()
+                if mode == 'sequential' and curWrites[index] == ts:
+                    mutexes[index].release()
 
 # receive_clientmsg : start to receive and interpret the messages sent from clients     
 def receive_clientmsg(clientSocket, index):
@@ -98,7 +94,6 @@ def receive_clientmsg(clientSocket, index):
     # initialize variables
     timeStamp = timeStamps[index]
     clientPort = clientPorts[index]
-    mutex = mutexes[index]
 
     location = str(index)
     # start receiving msg from clients
@@ -132,14 +127,14 @@ def receive_clientmsg(clientSocket, index):
 
             # A broadcastMsg is a ["broadcast", key, val, byte, timeStamp : String]
             incrementTimeStamp(timeStamp) # call broadcast
+            curWrites[index] = str(timeStamp)
             broadcastMsg = ["broadcast", key, val, byte, str(timeStamp), 'message']
             if mode == 'eventual':
                 broadcast(str(broadcastMsg))
             if mode == 'sequential':
                 # blocking broadcast
                 broadcast(str(broadcastMsg))
-                curWrites[index] = str(timeStamp)
-                mutex.acquire()
+                mutexes[index].acquire()
             reply = "STORED"
         connectionSocket.send(str.encode(reply))
         connectionSocket.close()
