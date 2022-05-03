@@ -44,6 +44,11 @@ def receive_servermsg(serverSocket, index):
     timeStamp = timeStamps[index]
     pqueue = pqueues[index]
     ackDict = ackDicts[index]
+<<<<<<< HEAD
+=======
+    mutex = mutexes[index]
+    curWrite = curWrites[index]
+>>>>>>> d2fe5ad318f34567e998df1929aacfb873d214bf
 
     location = str(index)
 
@@ -81,9 +86,14 @@ def receive_servermsg(serverSocket, index):
             
             # pop only if the msg in the first in the priority queue and has collected all acknowledgements
             firstTS = pqueue[0]
+<<<<<<< HEAD
+=======
+
+>>>>>>> d2fe5ad318f34567e998df1929aacfb873d214bf
             if encodeTimeStamp(eval(ts)) == firstTS and ackDict.get(ts) == numberOfPorts:
                 ackDict.pop(ts)
                 heappop(pqueue)
+                time.sleep(5)
                 modify(location, key, val, byte)
                 if mode == 'sequential' and curWrites[index] == ts:
                     mutexes[index].release()
