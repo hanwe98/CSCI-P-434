@@ -22,5 +22,4 @@ serverPort = 9889
 msg1 = ['set', key, val, '1']
 msg2 = ['get', key]
 sendmsg(msg1)
-print('set ok!')
 sendmsg(msg2)
