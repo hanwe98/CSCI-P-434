@@ -84,7 +84,6 @@ def receive_servermsg(serverSocket, index):
             if encodeTimeStamp(eval(ts)) == firstTS and ackDict.get(ts) == numberOfPorts:
                 ackDict.pop(ts)
                 heappop(pqueue)
-                time.sleep(5)
                 modify(location, key, val, byte)
                 if mode == 'sequential' and curWrites[index] == ts:
                     mutexes[index].release()
