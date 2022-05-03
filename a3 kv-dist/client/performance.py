@@ -14,9 +14,12 @@ def sendmsg(msg):
 serverName = "localhost"
 serverPort = 9889
 
-startTime = time.time() 
-msg1 = ['set', 'x', '0', '1']
+startTime = time.time()
+for i in range(100):
+    msg1 = ['set', 'x', str(i), '1']
+    msg2 = ['get', 'x']
+    sendmsg(msg1)
+    sendmsg(msg2)
 endTime = time.time()
 
 print(f'time elapsed: {endTime - startTime}')
-sendmsg(msg1)
