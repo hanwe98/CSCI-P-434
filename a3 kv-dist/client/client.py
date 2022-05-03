@@ -1,12 +1,16 @@
 from socket import *
 import sys
 
-def findUntilNextSpace(t):
-    i = 0
-    for i in range(0,len(t)):
-        if t[i] == " ":
-            return (t[0:i], t[i+1:])
-    return (t,'')
+
+def sendmsg(msg):
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((serverName,serverPort))
+    print(f"You are connected to port {serverPort} of the {serverName}")
+
+    clientSocket.send(str.encode(str(msg)))
+    modifiedSentence = clientSocket.recv(1024)
+    print(modifiedSentence.decode())
+    clientSocket.close()
 
 def sendmsg(msg):
     clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -53,4 +57,3 @@ while 1:
         continue
 
     sendmsg(msg)
-
